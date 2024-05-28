@@ -5,13 +5,13 @@ on:
     branches:
       - main
     paths:
-      - 'index.js/**'
+      - 'index.js'
       - 'Dockerfile'
   pull_request:
     branches:
       - main
     paths:
-      - 'index.js/**'
+      - 'index.js'
       - 'Dockerfile'
     types: [opened, synchronize, reopened]
 
