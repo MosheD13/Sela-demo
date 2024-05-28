@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'application/**'
+      - 'Dockerfile'
   pull_request:
     branches:
       - main
+    paths:
+      - 'application/**'
+      - 'Dockerfile'
     types: [opened, synchronize, reopened]
 
 jobs:
