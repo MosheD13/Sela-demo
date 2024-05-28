@@ -1,58 +1,21 @@
-name: CI
+# Use the official Node.js image
+FROM node:14-alpine
 
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'application/**'
-      - 'Dockerfile'
-  pull_request:
-    branches:
-      - main
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'application/**'
-      - 'Dockerfile'
+# Set the working directory inside the container
+WORKDIR /app
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# Copy package.json and package-lock.json to the working directory
+COPY package*.json ./
 
-    strategy:
-      matrix:
-        node-version: [12.x, 14.x, 16.x]
+# Install dependencies
+RUN npm install
 
-    steps:
-      - uses: actions/checkout@v2
+# Copy the rest of the application code to the working directory
+COPY . .
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node-version }}
+# Expose the port the app runs on
+EXPOSE 3000
 
-      - run: npm install
+# Command to run the application
+CMD ["node", "app.js"]
 
-      - run: npm test
-
-  docker:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && success()
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Build Docker image
-        run: docker build . -t ${{ secrets.DOCKER_USERNAME }}/nodejs-app:${{ github.sha }}
-
-      - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/nodejs-app:${{ github.sha }}
-
-  deploy:
-    needs: docker
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Deploying to platform..."
