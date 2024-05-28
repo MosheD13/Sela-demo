@@ -1,21 +1,64 @@
-# Use the official Node.js image
-FROM node:14-alpine
+name: CI Pipeline
 
-# Set the working directory inside the container
-WORKDIR /app
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'node-app/**'
+      - 'Dockerfile'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'node-app/**'
+      - 'Dockerfile'
+    types: [opened, synchronize, reopened]
 
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
 
-# Install dependencies
-RUN npm install
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-# Copy the rest of the application code to the working directory
-COPY . .
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-# Expose the port the app runs on
-EXPOSE 3000
+      - name: Install dependencies
+        run: npm install
 
-# Command to run the application
-CMD ["node", "app.js"]
+      - name: Run tests
+        run: |
+          echo "const request = require('supertest');" > test.js
+          echo "const app = require('./index');" >> test.js
+          echo "request(app).get('/').expect(200, 'AM ISRAEL HAI!').end((err, res) => { if (err) throw err; });" >> test.js
+          node test.js
 
+  docker-build:
+    needs: build-and-test
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t <your-dockerhub-username>/node-app:${{ github.sha }} .
+
+      - name: Push Docker image
+        run: docker push <your-dockerhub-username>/node-app:${{ github.sha }}
+
+  deploy:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploying to platform...
+        run: echo "Deploying to platform..."
