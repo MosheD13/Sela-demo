@@ -49,17 +49,3 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Build and push Docker image
-        run: |
-          docker build -t yourdockerhubusername/nodejs-docker-ci-cd .
-          docker tag yourdockerhubusername/nodejs-docker-ci-cd:latest yourdockerhubusername/nodejs-docker-ci-cd:latest
-          docker push yourdockerhubusername/nodejs-docker-ci-cd:latest
-
-  deploy:
-    needs: build-and-push-docker
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy step
-        run: echo "Deploying to platform..."
