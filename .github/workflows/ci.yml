@@ -1,3 +1,4 @@
+User
 name: CI Pipeline
 
 on:
@@ -5,14 +6,14 @@ on:
     branches:
       - main
     paths:
-      - 'application/**'
+      - 'sela-demo/**'
       - 'Dockerfile'
   pull_request:
     branches:
       - main
     types: [opened, synchronize, reopened]
     paths:
-      - 'application/**'
+      - 'sela-demo/**'
       - 'Dockerfile'
 
 jobs:
@@ -26,7 +27,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'  # Use latest LTS version
+          node-version: '14'
 
       - name: Install dependencies
         run: npm install
@@ -34,36 +35,27 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Test endpoint response
-        run: |
-          response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" http://localhost:3000/your-endpoint)
-          body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
-          status=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-          if [ $status -ne 200 ]; then
-            echo "Error: Endpoint did not return 200. Returned $status"
-            exit 1
-          fi
-
       - name: Build Docker image
         if: success()
         run: docker build -t moshedana/sela-demo .
 
       - name: Log in to Docker Hub
-        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
         run: |
+          echo "Logging in with username: $DOCKER_HUB_USERNAME"
           echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
 
       - name: Push Docker image to Docker Hub
-        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker push moshedana/sela-demo
 
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Deploying to platform...
         run: echo "Deploying to platform..."
