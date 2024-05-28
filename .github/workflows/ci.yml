@@ -49,7 +49,7 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: docker push my-docker-username/node-docker-app
+        run: docker push my-docker-username/sela-demo
 
   deploy:
     needs: build-and-test
