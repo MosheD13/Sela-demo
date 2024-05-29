@@ -22,6 +22,7 @@ jobs:
     strategy:
       matrix:
         node-version: [ 14.0, 15.0, 16.0,]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout code
