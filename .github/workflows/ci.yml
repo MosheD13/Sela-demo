@@ -18,6 +18,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
 
     steps:
       - name: Checkout code
@@ -26,7 +29,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm install
@@ -35,26 +38,36 @@ jobs:
         run: npm test
 
       - name: Build Docker image
-        if: success()
-        run: docker build -t moshedana/sela-demo .
+        if: success() && matrix.node-version == '14.x'
+        run: docker build -t moshedana/sela-demo:${{ github.sha }} .
 
       - name: Log in to Docker Hub
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == '14.x'
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
         run: |
-          echo "Logging in with username: $DOCKER_HUB_USERNAME"
           echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
 
       - name: Push Docker image to Docker Hub
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: docker push moshedana/sela-demo
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == '14.x'
+        run: docker push moshedana/sela-demo:${{ github.sha }}
 
-  deploy:
+  call-deploy-workflow:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Deploying to platform...
-        run: echo "Deploying to platform..."
+      - name: Call deploy workflow
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yaml',
+              ref: 'main',
+              inputs: {
+                image_tag: '${{ github.sha }}'
+              }
+            })
