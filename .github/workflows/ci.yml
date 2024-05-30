@@ -16,7 +16,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build-and-test:
+  parallel-test:
     runs-on: ubuntu-latest
 
     strategy:
