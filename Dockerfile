@@ -1,4 +1,4 @@
-#Use the official Node.js image
+# lightweight Node.js image (the full node.js is big and can affect the run time of the build)
 FROM node:14-alpine
 
 # Set the working directory inside the container
