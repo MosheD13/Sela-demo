@@ -1,25 +1,37 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'index.js'
+      - 'Dockerfile'
   pull_request:
     branches:
       - main
+    paths:
+      - 'index.js'
+      - 'Dockerfile'
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  parallel-test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v2
         with:
-          node-version: '16'
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm install
@@ -27,18 +39,25 @@ jobs:
       - name: Run tests
         run: npm test
 
-  trigger-deploy:
+  build-and-push-docker:
     runs-on: ubuntu-latest
-    needs: build
+    needs: parallel-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
     steps:
-      - name: Trigger deployment workflow
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { github, context } = require('@actions/github');
-            github.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy.yaml',
-              ref: context.ref,
-            });
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker image
+        run: docker build -t moshedana/sela-demo .
+
+      - name: Log in to Docker Hub
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        run: |
+          echo "Logging in with username: $DOCKER_HUB_USERNAME"
+          echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+
+      - name: Push Docker image to Docker Hub
+        run: docker push moshedana/sela-demo
