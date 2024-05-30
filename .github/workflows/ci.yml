@@ -62,4 +62,21 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push moshedana/sela-demo
 
-
+  trigger-deployment:
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker
+    steps:
+      - name: Trigger deployment workflow
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflow_id = 'deploy.yaml';
+            const ref = 'main'; // Adjust this if you want to target a different branch
+            await github.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id,
+              ref
+            });
