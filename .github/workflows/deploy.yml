@@ -1,20 +1,28 @@
-name: Deploy Pipeline
+name: Deployment Pipeline
 
 on:
   workflow_call:
-    inputs:
-      image:
+    secrets:
+      DOCKER_HUB_USERNAME:
         required: true
-        type: string
+      DOCKER_HUB_PASSWORD:
+        required: true
 
 jobs:
-  deploy:
+  deploy-to-platform:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
-      - name: Deploying to platform
-        run: |
-          echo "Deploying image ${{ inputs.image }} to platform..."
 
+      - name: Log in to Docker Hub
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        run: |
+          echo "Logging in with username: $DOCKER_HUB_USERNAME"
+          echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+
+      - name: Deploy to platform
+        run: echo "Deploying to platform..."
