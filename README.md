@@ -12,4 +12,4 @@ the jobs of the workflow with explanation:
 4. The trigger-deploy job in your GitHub Actions workflow is designed to trigger another workflow, specifically the deploy.yaml workflow,
  after the build-and-push-docker job completes. I am using the github token for collecting the workflow api to know  when it will trigger.
 
-5. 
+5. The deploy.yaml will run
