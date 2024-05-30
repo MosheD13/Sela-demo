@@ -67,16 +67,9 @@ jobs:
     needs: build-and-push-docker
     steps:
       - name: Trigger deployment workflow
-        uses: actions/github-script@v6
+        uses: octokit/request-action@v2
         with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const workflow_id = 'deploy.yaml';
-            const ref = 'main'; // Adjust this if you want to target a different branch
-            await github.actions.createWorkflowDispatch({
-              owner,
-              repo,
-              workflow_id,
-              ref
-            });
+          route: POST /repos/${{ github.repository }}/actions/workflows/deploy.yaml/dispatches
+          ref: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
