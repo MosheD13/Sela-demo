@@ -69,6 +69,7 @@ jobs:
       - name: Trigger deployment workflow
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
