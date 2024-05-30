@@ -17,3 +17,4 @@ the jobs of the workflow with explanation:
 
 To run the app run this command on your docker: docker run -p 3000:3000 moshedana/sela-demo 
 it will pull the image from my repo and run it as a contiener on port 3000
+
