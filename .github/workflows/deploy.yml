@@ -1,20 +1,20 @@
-name: Deploy
+name: Deploy Pipeline
 
 on:
   workflow_call:
     inputs:
-      image_tag:
+      image:
         required: true
         type: string
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      
+      - name: Deploying to platform
+        run: |
+          echo "Deploying image ${{ inputs.image }} to platform..."
 
-      - name: Deploy to platform
-        run: echo "Deploying to platform with image moshedana/sela-demo:${{ inputs.image_tag }}"
-        # Add actual deployment commands here
