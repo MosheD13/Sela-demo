@@ -62,10 +62,4 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push moshedana/sela-demo
 
-  deploy:
-    needs: build-and-push-docker
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Deploying to platform...
-        run: echo "Deploying to platform..."
+
